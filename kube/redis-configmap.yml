@@ -1,0 +1,10 @@
+
+# Define 'Configmap' to store non-sensitive database configuration 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-conf  # name of ConfigMap, referenced in other files
+  namespace: ops-demo
+data:
+  host: redis   # host address of redis server, we are using DNS of Service
+  name: demo-app-db # name of the database for application

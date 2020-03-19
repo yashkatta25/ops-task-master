@@ -1,0 +1,49 @@
+# Define a 'Service' To Expose redis to Other Services
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: ops-demo
+spec:
+  selector:
+    app: redis
+    tier: database
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+# Configure 'Deployment' of redis server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: ops-demo
+  labels:
+    app: redis
+    tier: database
+spec:
+  selector: # mysql Pod Should contain same labels 
+    matchLabels:
+      app: redis
+      tier: database
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels: # Must match 'Service' and 'Deployment' selectors
+        app: redis
+        tier: database
+    spec:
+      containers:
+      - image: redis:alpine # image from docker-hub
+        name: redis
+        ports:
+        - containerPort: 6379
+          name: redis
+        resources:
+          requests:
+            memory: "100Mi"
+            cpu: "100m"
+          limits:
+            memory: "200Mi"
+            cpu: "500m"

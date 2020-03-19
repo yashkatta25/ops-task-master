@@ -1,0 +1,57 @@
+- hosts: all
+  become: yes
+  become_user: root
+  tasks:
+
+    - name: setting_hostname
+      hostname:
+        name: demo-ops
+
+    - name: set_timezone
+      timezone:
+        name: Asia/Kolkata
+
+    - name: install_system_packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: [ 'git', 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'python-virtualenv', 'python3-setuptools']
+
+    - name: Add Docker GPG key
+      apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+
+    - name: add_docker_repo
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: install_docker
+      apt: update_cache=yes name=docker-ce state=latest
+
+    - name: Install docker-compose
+      apt:
+        name: docker-compose
+        state: present
+        update_cache: yes
+
+    - name: create_new_user
+      user:
+        name: demo
+
+    - name: adjust_user_demo_open_files_limit
+      pam_limits:
+        domain: demo
+        limit_type: soft
+        limit_item: nofile
+        value: 100000
+
+    - sysctl:
+          name: fs.file-max
+          value: '100000'
+          state: present
+
+    - git:
+        repo: 'https://github.com/yashkatta25/ops-task-master.git'
+        dest: /etc/demo-ops
+        version: master
+
+    - name: run_ansible_tasks
+      shell: "cd /etc/demo-ops && docker-compose up -d"
